@@ -12,8 +12,8 @@ mod grl;
 use grl::Terminal;
 
 
-const VIEW_WIDTH: i32 = 60;
-const VIEW_HEIGHT: i32 = 40;
+const VIEW_WIDTH: i32 = 64;
+const VIEW_HEIGHT: i32 = 48;
 const UI_SIZE: i32 = 20;
 const HEIGHT: i32 = VIEW_HEIGHT;
 const WIDTH: i32 = VIEW_WIDTH + UI_SIZE;
@@ -78,6 +78,11 @@ impl State for GameState {
         }
         else if input::is_key_pressed(ctx, Key::Down) {
             self.player.y += 1
+        }
+
+        if input::is_key_pressed(ctx, Key::Space) {
+            self.floor_map = world::world_genration(VIEW_WIDTH, VIEW_HEIGHT, GenerationType::Cave);
+            
         }
         Ok(())
 
