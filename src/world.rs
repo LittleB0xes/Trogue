@@ -45,16 +45,15 @@ pub fn cave_level(w: i32, h: i32) -> Vec<Tile> {
   // Sector division
   // 16/12/5 => Labyrinthe, peu de salles, quelques zone isolées
   // 8/6/12 => Grandes grottes communicantes
-  let h_cells: usize = 8;
-  let v_cells: usize = 6;
-  let mut cycle = 12;
+  let h_cells: usize = 16;
+  let v_cells: usize = 12;
+  let mut cycle = 5;
   let width = w / h_cells as i32;
   let height = h / v_cells as i32;
 
-
-
+  // 
   let mut level_map = Vec::new();
-  let mut draft: Vec<ItemType> = Vec::new();
+  let mut draft = Vec::new();
   
   
 
@@ -75,14 +74,14 @@ pub fn cave_level(w: i32, h: i32) -> Vec<Tile> {
 
   let mut temp = Vec::new();
   temp = draft.clone();
-  //for i in 0..(w * h) as usize {
-  //  temp.push(draft[i]);
-  //}
 
   // Let growing
+  
+  // Direction of the walker
   let direction: [i32; 4] = [-1, 1, -w, w];
-  while cycle > 0 {
 
+  // Walk cycle
+  while cycle > 0 {
     for i in 0..(w * h) as usize {
       match draft[i] {
         ItemType::StoneFloor => {
@@ -93,16 +92,12 @@ pub fn cave_level(w: i32, h: i32) -> Vec<Tile> {
           if x >= 0 && x < w && y >= 0 && y < h {
             temp[new_index as usize] = ItemType::StoneFloor;
           }
-
         }
         _ => {}
       }
     }
 
     draft = temp.clone();
-    //for i in 0..(w * h) as usize {
-    //  draft[i] = temp[i];
-    //}
 
     cycle -= 1;
   }
@@ -116,7 +111,25 @@ pub fn cave_level(w: i32, h: i32) -> Vec<Tile> {
 }
 
 pub fn floor_level(w: i32, h: i32) -> Vec<Tile> {
+
+  let mut rng = rand::thread_rng();
   let mut level_map = Vec::new();
+
+  // First, the Corridors
+
+  // Choose starting point
+  let x: i32 = rng.gen_range(5..(w-5));
+  let y: i32 = rng.gen_range(5..(h-5));
+
+  let dir = [-1,1,-w,w][rng.gen_range(0..4)];
+
+  let length = rng.gen_range(5..10);
+
+  // Choose direction length
+
+  
+
+  // Draw corridoe
 
   level_map
 }

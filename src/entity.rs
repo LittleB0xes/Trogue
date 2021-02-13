@@ -39,7 +39,9 @@ pub struct Tile {
     pub fg_color: Color,
     pub bg_color: Color,
     pub visible: bool,
+    pub see_through: bool,
     pub crossable: bool,
+    pub visited: bool,
 }
 
 impl Tile {
@@ -52,7 +54,9 @@ impl Tile {
             fg_color: Color::rgb8(150,100,150),
             bg_color: Color::rgb8(0,0,0),
             visible: true,
+            see_through: true,
             crossable: true,
+            visited: false,
         };
         
         match tile.item {
@@ -83,6 +87,7 @@ impl Tile {
         self.bg_color = Color::rgb8(rb, gb, bb);
         self.fg_color = Color::rgb8(black, black, black);
         self.crossable = false;
+        self.see_through = false;
 
     }
 
@@ -94,5 +99,6 @@ impl Tile {
         self.bg_color = Color::rgb8(gray, gray, gray);
         self.fg_color = Color::rgb8(black, black, black);
         self.crossable = false;
+        self.see_through = false;
     }
 }
