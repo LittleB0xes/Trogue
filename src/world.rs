@@ -26,7 +26,7 @@ pub fn random_level(w: i32, h: i32) -> Vec<Tile> {
     let alea: u8 = rng.gen_range(0..=100);
     let tile: Tile;
 
-    if alea < 10 {
+    if alea < 1 {
       tile = Tile::new(i as i32 % w, i as i32 / w, ItemType::StoneWall);
     }
     else {

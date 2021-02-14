@@ -15,12 +15,12 @@ mod grl;
 use grl::Terminal;
 
 
-const VIEW_WIDTH: i32 = 64;
-const VIEW_HEIGHT: i32 = 48;
+const VIEW_WIDTH: i32 = 40;
+const VIEW_HEIGHT: i32 = 25;
 const UI_SIZE: i32 = 20;
 const HEIGHT: i32 = VIEW_HEIGHT;
 const WIDTH: i32 = VIEW_WIDTH + UI_SIZE;
-const CELL_SIZE: i32 = 16;
+const CELL_SIZE: i32 = 24;
 
 struct Mouse {
     x: i32,
@@ -49,7 +49,7 @@ impl GameState {
             mouse: Mouse{x: 1, y: 1, active: false},
             terminal: Terminal::new(ctx, WIDTH, HEIGHT, CELL_SIZE, CELL_SIZE),
             player: Entity::new(10, 10, 64),
-            floor_map: world::world_genration(w, h, GenerationType::Cave),
+            floor_map: world::world_genration(w, h, GenerationType::Random),
 
 
         })
@@ -100,7 +100,7 @@ impl State for GameState {
         // Draw path
         if self.mouse.active {
             self.terminal.fg_color(Color::rgba8(255,255,0, 50));
-            let path = engine::path_finder(self.player.x, self.player.y, self.mouse.x, self.mouse.y, &self.floor_map, self.map_width, self.map_height);
+            let path = engine::path_finder(self.player.x, self.player.y, 20, 20, &self.floor_map, self.map_width, self.map_height);
             for step in path.iter() {
                 self.terminal.put(UI_SIZE + step.x, step.y, 219);
 
@@ -121,7 +121,7 @@ impl State for GameState {
 
     fn update(&mut self, ctx: &mut Context) -> tetra::Result {
 
-        engine::fov(self.player.x, self.player.y, 10, &mut self.floor_map, self.map_width, self.map_height);
+        //engine::fov(self.player.x, self.player.y, 10, &mut self.floor_map, self.map_width, self.map_height);
 
         if input::is_key_pressed(ctx, Key::Left) {
             self.action_manager(Action::Move, Direction::East);
