@@ -43,6 +43,7 @@ pub fn move_entity(entity: &mut Entity, dir: Direction) {
 }
 
 pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, level_map: &Vec<Tile>, w: i32, h: i32) -> Vec<Vec2<i32>>{
+
     #[derive(Copy, Clone, Eq, PartialEq)]
     struct Node {
         id: i32,
@@ -52,6 +53,7 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
         g: i32,
         parent: i32,
     };
+
     const MAX_CYCLE: i32 = 2000;
     let mut path = Vec::new();
     
@@ -77,6 +79,8 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
             }
             let mut current_node = open_list[0];
             let mut best_index: usize = 0;
+
+            // Choose the node with the best score
             for i in 0..open_list.len() {
                 if open_list[i].f < current_node.f {
                     current_node = open_list[i];
@@ -85,7 +89,11 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
             }
             current_node.id = id;
             closed_list.push(current_node);
+
+            // Update the node id value
             id +=1;
+
+            // Remove the selected node from the open list
             open_list.remove(best_index);
 
             // If current is the goal, the break
@@ -93,9 +101,11 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
                 break;
             }
 
-            // create children list
+            // create children list of cuurent node
             let mut children: Vec<Vec2<i32>> = Vec::new();
             for c in [(1,0), (-1, 0), (0, 1), (0, -1), (1,1), (1, -1), (-1, 1), (-1, -1)].iter() {
+
+                // keep only node in the map and crossable
                 if c.0 + current_node.x >= 0 && c.0 + current_node.x < w && c.1 + current_node.y >= 0 && c.1 + current_node.y < h && level_map[(c.0 + current_node.x + (c.1 + current_node.y) * w) as usize].crossable {
 
                     children.push(Vec2::new(c.0 + current_node.x, c.1 + current_node.y));
@@ -103,6 +113,8 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
             }
 
             for c in children.iter() {
+
+                // Zap node who are already in closed list
                 if closed_list.iter().any(|&n| n.x == c.x && n.y == c.y) {
                     continue;
                 }
@@ -112,6 +124,7 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
 
                 let mut out = false;
 
+                // Just keep the best node if it's already in open list
                 for op in open_list.iter() {
                     if op.x == c.x && op.y == c.y && op.g < g {
                         out = true;
@@ -120,6 +133,7 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
                 if out {
                     continue;
                 }
+
                 open_list.push(Node{x: c.x, y: c.y, f: f, g: g, id: -1, parent: current_node.id});
             }
         }
@@ -132,7 +146,6 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
         let mut node = closed_list[closed_list.len()-1];
         path.push(Vec2::new(node.x, node.y));
         while node.parent != -1 {
-            
             for o in closed_list.iter() {
                 if node.parent == o.id {
                     path.push(Vec2::new(o.x, o.y));
