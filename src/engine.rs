@@ -1,39 +1,82 @@
-use crate::entity::{Tile, Entity};
+use crate::entity::{Entity, Tile};
 use std::f32::consts::PI;
+use tetra::graphics::Color;
 use tetra::math::Vec2;
 
 #[derive(Copy, Clone)]
 pub enum Direction {
     None,
     North,
+    NorthEast,
+    NorthWest,
     South,
+    SouthEast,
+    SouthWest,
     East,
-    West
+    West,
 }
 
 pub enum Action {
     Move,
 }
 
-
-fn delta_pos(dir : Direction) -> (i32,i32) {
+/// Take a geographical direction and return a movment tuple
+fn delta_pos(dir: Direction) -> (i32, i32) {
     let delta: (i32, i32);
     match dir {
-        Direction::None => delta = (0,0),
-        Direction::North => delta = (0,-1),
-        Direction::South => delta = (0,1),
-        Direction::East => delta = (-1,0),
-        Direction::West => delta = (1,0),
+        Direction::None => delta = (0, 0),
+        Direction::North => delta = (0, -1),
+        Direction::NorthWest => delta = (-1, -1),
+        Direction::NorthEast => delta = (1, -1),
+        Direction::South => delta = (0, 1),
+        Direction::SouthWest => delta = (-1, 1),
+        Direction::SouthEast => delta = (1, 1),
+        Direction::East => delta = (1, 0),
+        Direction::West => delta = (-1, 0),
     }
     delta
 }
 
-pub fn check_crossable_destination(player_x: i32, player_y: i32, dir: Direction, level_map: &Vec<Tile>, w: i32) -> bool {
+/// Take a movment tuple and return a geographical direction
+pub fn orientation(dir: (i32, i32)) -> Direction {
+    let o: Direction;
+    match dir {
+        (0, 0) => o = Direction::None,
+        (1, 0) => o = Direction::East,
+        (-1, 0) => o = Direction::West,
+        (0, 1) => o = Direction::South,
+        (0, -1) => o = Direction::North,
+        (1, 1) => o = Direction::SouthEast,
+        (1, -1) => o = Direction::NorthEast,
+        (-1, 1) => o = Direction::SouthWest,
+        (-1, -1) => o = Direction::NorthWest,
+        _ => o = Direction::None,
+    }
+
+    o
+}
+
+pub fn check_crossable_destination(
+    player_x: i32,
+    player_y: i32,
+    dir: Direction,
+    level_map: &Vec<Tile>,
+    w: i32,
+    h: i32
+) -> bool {
     let d = delta_pos(dir);
     let x = player_x + d.0;
     let y = player_y + d.1;
 
-    level_map[(y * w + x) as usize].crossable
+    is_in_map(x, y, w, h) && level_map[(y * w + x) as usize].crossable
+}
+
+fn is_in_map(x: i32, y: i32, w: i32, h: i32) -> bool {
+    if x>=0 && x < w && y>=0 && y < h {
+        true
+    } else {
+        false
+    }
 }
 
 pub fn move_entity(entity: &mut Entity, dir: Direction) {
@@ -42,8 +85,16 @@ pub fn move_entity(entity: &mut Entity, dir: Direction) {
     entity.y += delta.1;
 }
 
-pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, level_map: &Vec<Tile>, w: i32, h: i32) -> Vec<Vec2<i32>>{
-
+/// Pathfinding with A* algorithm
+pub fn path_finder(
+    x_entity: i32,
+    y_entity: i32,
+    x_mouse: i32,
+    y_mouse: i32,
+    level_map: &Vec<Tile>,
+    w: i32,
+    h: i32,
+) -> Vec<Vec2<i32>> {
     #[derive(Copy, Clone, Eq, PartialEq)]
     struct Node {
         id: i32,
@@ -54,22 +105,31 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
         parent: i32,
     };
 
-    const MAX_CYCLE: i32 = 2000;
+    const MAX_CYCLE: i32 = 4000;
     let mut path = Vec::new();
-    
+
     let mut open_list: Vec<Node> = Vec::new();
     let mut closed_list: Vec<Node> = Vec::new();
 
     // Add the starting point to the open list
-    open_list.push(Node{x: x_entity, y: y_entity, f: 0, g: 0, id: 0, parent: -1});
+    open_list.push(Node {
+        x: x_entity,
+        y: y_entity,
+        f: 0,
+        g: 0,
+        id: 0,
+        parent: -1,
+    });
 
     let mut id: i32 = 0;
 
     // Check mouse position
-    if x_mouse >= 0 && x_mouse < w && y_mouse >= 0 && y_mouse < h && level_map[(x_mouse + y_mouse * w ) as usize].crossable {
+    if is_in_map(x_mouse, y_mouse, w, h)
+        && level_map[(x_mouse + y_mouse * w) as usize].crossable
+        && level_map[(x_mouse + y_mouse * w) as usize].visited
+    {
         let mut cycle = 0;
         while !open_list.is_empty() {
-
             // Add a depth limit for path finding (to avoid infinite loop)
             //if open_list.len() > (w * h) as usize {
             cycle += 1;
@@ -91,7 +151,7 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
             closed_list.push(current_node);
 
             // Update the node id value
-            id +=1;
+            id += 1;
 
             // Remove the selected node from the open list
             open_list.remove(best_index);
@@ -103,22 +163,38 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
 
             // create children list of cuurent node
             let mut children: Vec<Vec2<i32>> = Vec::new();
-            for c in [(1,0), (-1, 0), (0, 1), (0, -1), (1,1), (1, -1), (-1, 1), (-1, -1)].iter() {
-
+            for c in [
+                (1, 0),
+                (-1, 0),
+                (0, 1),
+                (0, -1),
+                (1, 1),
+                (1, -1),
+                (-1, 1),
+                (-1, -1),
+            ]
+            .iter()
+            {
                 // keep only node in the map and crossable
-                if c.0 + current_node.x >= 0 && c.0 + current_node.x < w && c.1 + current_node.y >= 0 && c.1 + current_node.y < h && level_map[(c.0 + current_node.x + (c.1 + current_node.y) * w) as usize].crossable {
-
+                if c.0 + current_node.x >= 0
+                    && c.0 + current_node.x < w
+                    && c.1 + current_node.y >= 0
+                    && c.1 + current_node.y < h
+                    && level_map[(c.0 + current_node.x + (c.1 + current_node.y) * w) as usize]
+                        .crossable
+                    && level_map[(c.0 + current_node.x + (c.1 + current_node.y) * w) as usize]
+                        .visited
+                {
                     children.push(Vec2::new(c.0 + current_node.x, c.1 + current_node.y));
                 }
             }
 
             for c in children.iter() {
-
                 // Zap node who are already in closed list
                 if closed_list.iter().any(|&n| n.x == c.x && n.y == c.y) {
                     continue;
                 }
-                let g = current_node.g + 1 ;
+                let g = current_node.g + 1;
                 let h = distance(c.x, c.y, x_mouse, y_mouse);
                 let f = g + h;
 
@@ -134,35 +210,58 @@ pub fn path_finder(x_entity: i32, y_entity: i32, x_mouse: i32, y_mouse: i32, lev
                     continue;
                 }
 
-                open_list.push(Node{x: c.x, y: c.y, f: f, g: g, id: -1, parent: current_node.id});
+                open_list.push(Node {
+                    x: c.x,
+                    y: c.y,
+                    f: f,
+                    g: g,
+                    id: -1,
+                    parent: current_node.id,
+                });
             }
         }
     }
 
-
     // Now, take the best way
     // Go from child to parent until reach the starting point
     if closed_list.len() != 0 {
-        let mut node = closed_list[closed_list.len()-1];
+        let mut node = closed_list[closed_list.len() - 1];
         path.push(Vec2::new(node.x, node.y));
         while node.parent != -1 {
             for o in closed_list.iter() {
                 if node.parent == o.id {
                     path.push(Vec2::new(o.x, o.y));
-                    node = Node{id: o.id, x: o.x, y: o.y, f: o.f, g: o.g, parent: o.parent};
+                    node = Node {
+                        id: o.id,
+                        x: o.x,
+                        y: o.y,
+                        f: o.f,
+                        g: o.g,
+                        parent: o.parent,
+                    };
                 }
             }
         }
-
     }
 
     path
 }
 
-fn distance(x1: i32, y1: i32, x2: i32, y2: i32) -> i32{
+fn distance(x1: i32, y1: i32, x2: i32, y2: i32) -> i32 {
     (x1 - x2).pow(2) + (y1 - y2).pow(2)
 }
 
+/// Color modification for visited tile
+pub fn visited_color(color: Color) -> (u8, u8, u8) {
+    let f = 0.5;
+    let r = (color.r * 255.0 * f) as u8;
+    let g = (color.g * 255.0 * f) as u8;
+    let b = (color.b * 255.0 * f) as u8;
+
+    (r, g, b)
+}
+
+// Simple raycasting fov with range view
 pub fn fov(
     x_entity: i32,
     y_entity: i32,
@@ -205,7 +304,6 @@ pub fn fov(
             level_map[z as usize].visible = true;
             level_map[z as usize].visited = true;
 
-            
             // Add tile in fov
             in_fov_tile.push([z % w, z / w]);
 

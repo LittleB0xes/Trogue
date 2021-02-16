@@ -1,6 +1,6 @@
 use tetra::graphics::{self, Color, DrawParams, Rectangle, Texture};
-use tetra::Context;
 use tetra::math::Vec2;
+use tetra::Context;
 
 const MAX_LAYER: usize = 3;
 
@@ -13,15 +13,15 @@ struct Cell {
 }
 
 pub struct Terminal {
-  w: i32,
-  h: i32,
-  cell_w: i32,
-  cell_h: i32,
-  current_layer: usize,
-  fg_color: Color,
-  bg_color: Color,
-  tileset: Texture,
-  console: Vec<Vec<Cell>>
+    w: i32,
+    h: i32,
+    cell_w: i32,
+    cell_h: i32,
+    current_layer: usize,
+    fg_color: Color,
+    bg_color: Color,
+    tileset: Texture,
+    console: Vec<Vec<Cell>>,
 }
 
 impl Terminal {
@@ -31,26 +31,23 @@ impl Terminal {
             24 => ts = Texture::new(ctx, "./assets/24x24.png").unwrap(),
             16 => ts = Texture::new(ctx, "./assets/16x16.png").unwrap(),
             8 => ts = Texture::new(ctx, "./assets/8x8.png").unwrap(),
-            _ => ts = Texture::new(ctx, "./assets/24x24.png").unwrap()
-
+            _ => ts = Texture::new(ctx, "./assets/24x24.png").unwrap(),
         }
         let bg = Color::rgb8(0, 0, 0);
         let fg = Color::rgb8(255, 255, 255);
         let mut cons = Vec::new();
         for l in 0..MAX_LAYER {
             let mut layer = Vec::new();
-            for i in 0..(w*h) as usize {
-                layer.push(
-                    Cell{
-                        x: (i as i32) % w,
-                        y: (i as i32) / w,
-                        glyph: 0,
-                        fg_color: fg,
-                        bg_color: bg,
-                    });
+            for i in 0..(w * h) as usize {
+                layer.push(Cell {
+                    x: (i as i32) % w,
+                    y: (i as i32) / w,
+                    glyph: 0,
+                    fg_color: fg,
+                    bg_color: bg,
+                });
             }
             cons.push(layer);
-
         }
         Terminal {
             w: w,
@@ -71,7 +68,6 @@ impl Terminal {
                 cell.glyph = 0;
                 cell.bg_color = self.bg_color;
                 cell.fg_color = self.fg_color;
-
             }
         }
     }
@@ -103,15 +99,14 @@ impl Terminal {
 
     pub fn put(&mut self, x: i32, y: i32, glyph: u8) {
         let index = y * self.w + x;
-        self.console[self.current_layer][index as usize].glyph =  glyph;
+        self.console[self.current_layer][index as usize].glyph = glyph;
         self.console[self.current_layer][index as usize].fg_color = self.fg_color;
         self.console[self.current_layer][index as usize].bg_color = self.bg_color;
     }
 
     pub fn print(&mut self, x: i32, y: i32, string: String) {
-        for (i,letter) in string.chars().enumerate() {
+        for (i, letter) in string.chars().enumerate() {
             self.put(x + i as i32, y, letter as u8);
-
         }
     }
 
@@ -125,25 +120,36 @@ impl Terminal {
                 if n == 0 {
                     self.tileset.draw_region(
                         ctx,
-                        Rectangle::new((self.cell_w * bx) as f32, (self.cell_h * by) as f32, self.cell_w as f32, self.cell_h as f32),
+                        Rectangle::new(
+                            (self.cell_w * bx) as f32,
+                            (self.cell_h * by) as f32,
+                            self.cell_w as f32,
+                            self.cell_h as f32,
+                        ),
                         DrawParams::new()
-                            .position(Vec2::new((cell.x * self.cell_w) as f32, (cell.y * self.cell_h) as f32))
+                            .position(Vec2::new(
+                                (cell.x * self.cell_w) as f32,
+                                (cell.y * self.cell_h) as f32,
+                            ))
                             .color(cell.bg_color),
-
                     );
-
                 }
                 self.tileset.draw_region(
                     ctx,
-                    Rectangle::new((self.cell_w * tx) as f32, (self.cell_h * ty) as f32, self.cell_w as f32, self.cell_h as f32),
+                    Rectangle::new(
+                        (self.cell_w * tx) as f32,
+                        (self.cell_h * ty) as f32,
+                        self.cell_w as f32,
+                        self.cell_h as f32,
+                    ),
                     DrawParams::new()
-                        .position(Vec2::new((cell.x * self.cell_w) as f32, (cell.y * self.cell_h) as f32))
+                        .position(Vec2::new(
+                            (cell.x * self.cell_w) as f32,
+                            (cell.y * self.cell_h) as f32,
+                        ))
                         .color(cell.fg_color),
-
                 );
-
             }
-            
         }
     }
 }
